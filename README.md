@@ -1,4 +1,4 @@
-# [<img src="logo.jpg" width="36" height="36" />](https://github.com/junhoyeo) Threads Client
+# [<img src="logo.jpg" width="36" height="36" />](https://github.com/junhoyeo) Threads Client Ruby
 
 > Unofficial, Reverse-Engineered Ruby client for Meta's [Threads](https://threads.net).
 
