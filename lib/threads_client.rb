@@ -20,6 +20,11 @@ module ThreadsClient
     end
   end
 
+  def self.get_userinfo
+    core = ThreadsClient::Core.new ThreadsClient::Config.credentials
+    core.user_info
+  end
+
   def self.publish(options = {})
     core = ThreadsClient::Core.new ThreadsClient::Config.credentials
     if options[:text] && options[:image]

@@ -39,12 +39,8 @@ module ThreadsClient
       p response_handler(response)
     end
 
-    def user_token
-      @user_token ||= req_login_n_get_token
-    end
-
-    def user_id
-      @user_id ||= req_get_user_id
+    def user_info
+      { usertoken: user_token, userid: user_id }
     end
 
     private
@@ -56,6 +52,14 @@ module ThreadsClient
         os_version: 25,
         os_release: '7.1.1'
       }
+    end
+
+    def user_token
+      @user_token ||= req_login_n_get_token
+    end
+
+    def user_id
+      @user_id ||= req_get_user_id
     end
 
     def get_app_headers
