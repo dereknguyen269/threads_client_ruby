@@ -50,6 +50,16 @@ module ThreadsClientRuby
     core.publish(options)
   end
 
+  def self.get_post_id_from_url(post_url, options = {})
+    uri = URI.parse(post_url)
+    response = Net::HTTP.get_response(uri)
+    text = response.body.to_s.gsub(/\s+/, '').gsub(/\n+/, '')
+
+    post_id = text.match(/{"post_id":"(.*?)"}/)&.captures&.first
+    lsd_token = text.match(/"LSD",\[\],{"token":"(\w+)"},\d+\]/)&.captures&.first
+    post_id
+    end
+
   class Core
     def initialize(credentials = {})
       if credentials.is_a?(Hash)

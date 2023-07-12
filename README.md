@@ -64,7 +64,8 @@ end
 - [x] ✅ [Text Threads](#✨-threads-with-image)
 - [x] ✅ [Threads with Image](#✨-threads-with-image)
 - [x] ✅ [Threads with Link Attachment](#✨-threads-with-link-attachment)
-- [ ] ✅ [Reply to Other Threads](#✨-reply-to-other-threads)
+- [x] ✅ [Get Post Id From URL](#✨-get-post-id-from-url)
+- [x] ✅ [Reply to Other Threads](#✨-reply-to-other-threads)
 - [ ] ✅ [Like/Unlike a Thread](#✨-likeunlike-a-thread)
 - [ ] ✅ [Follow/Unfollow a User](#✨-followunfollow-a-user)
 - [ ] ✅ [Delete a Post](#✨-delete-a-post)
@@ -91,7 +92,18 @@ ThreadsClientRuby.publish(text: 'Hello World!', image: '/Users/local-path/logo.j
 ThreadsClientRuby.publish(url: 'https://github.com/dereknguyen269/threads_client_ruby')
 ```
 
+###### ✨ Get Post Id From URL
+
+```ruby
+post_id = ThreadsClientRuby.get_post_id('https://www.threads.net/t/CugF-EjhQ3r')
+# => 3143538795635609067
+```
+
 ###### ✨ Reply to Other Threads
+
+```ruby
+ThreadsClientRuby.publish(reply_id: post_id, text: "Reply to #{post_id}")
+```
 
 ###### ✨ Like/Unlike a Thread
 
