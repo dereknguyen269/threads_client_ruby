@@ -62,7 +62,7 @@ end
 #### 📌 Features
 
 - [x] ✅ [Text Threads](#✨-threads-with-image)
-- [ ] ✅ [Threads with Image](#✨-threads-with-image)
+- [x] ✅ [Threads with Image](#✨-threads-with-image)
 - [ ] ✅ [Threads with Link Attachment](#✨-threads-with-link-attachment)
 - [ ] ✅ [Reply to Other Threads](#✨-reply-to-other-threads)
 - [ ] ✅ [Like/Unlike a Thread](#✨-likeunlike-a-thread)
@@ -76,6 +76,14 @@ ThreadsClientRuby.publish(text: 'Hello World!')
 ```
 
 ###### ✨ Threads with Image
+
+```ruby
+# Online image path
+ThreadsClientRuby.publish(text: 'Hello World!', image: 'https://fastly.picsum.photos/id/654/536/354.jpg?hmac=Nqd_oi3EIiPJBAVPYhIUjaEvKpRqLjhtTHkxPmjjo7M')
+
+# Or with local image path
+ThreadsClientRuby.publish(text: 'Hello World!', image: '/Users/local-path/logo.jpg')
+```
 
 ###### ✨ Threads with Link Attachment
 

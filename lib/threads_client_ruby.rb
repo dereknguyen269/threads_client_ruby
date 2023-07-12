@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "threads_client_ruby/version"
+require 'securerandom'
 require 'net/http'
 require 'uri'
 require 'json'
+require 'httparty'
+require 'mime/types'
 
 module ThreadsClientRuby
   DEFAULT_DEVICE_ID = "android-#{rand(36**24).to_s(36)}"
@@ -11,6 +14,7 @@ module ThreadsClientRuby
   BASE_API_URL = 'https://i.instagram.com/api/v1'
   LOGIN_URL = BASE_API_URL + '/bloks/apps/com.bloks.www.bloks.caa.login.async.send_login_request/'
   POST_URL = BASE_API_URL + '/media/configure_text_only_post/'
+  POST_WITH_IMAGE_URL = BASE_API_URL + '/media/configure_text_post_app_feed/'
   DEFAULT_LSD_TOKEN = 'NjppQDEgONsU_1LCzrmp6q'
   class Error < StandardError; end
   module Config
@@ -36,41 +40,36 @@ module ThreadsClientRuby
     core.user_info
   end
 
+  # available key for options:
+  # - text
+  # - image
   def self.publish(options = {})
     core = ThreadsClientRuby::Core.new ThreadsClientRuby::Config.credentials
-    if options[:text] && options[:image]
-    elsif options[:text]
-      core.publish(options)
-    elsif options[:image]
-    else
-      raise Error.new "Don't have text or image"
-    end
+    core.publish(options)
   end
 
   class Core
-    def initialize(credentials)
-      @username = credentials[:username]
-      @password = credentials[:password]
-      @user_token = credentials[:usertoken]
-      @user_id = credentials[:userid]
+    def initialize(credentials = {})
+      if credentials.is_a?(Hash)
+        @username = credentials[:username]
+        @password = credentials[:password]
+        @user_token = credentials[:usertoken]
+        @user_id = credentials[:userid]
+      else
+        raise "Invalid credentials"
+      end
     end
 
     def publish(options)
-      now = Time.now
-      timezone_offset = -now.utc_offset
-
-      data = {
-        text_post_app_info: { reply_control: 0 },
-        timezone_offset: timezone_offset.to_s,
-        source_type: '4',
-        _uid: user_id,
-        device_id: DEFAULT_DEVICE_ID,
-        caption: options[:text] || 'Please enter the text',
-        upload_id: now.to_i,
-        device: androidDevice
-      }
-      data[:publish_mode] = 'text_post'
-      url = URI.parse(ThreadsClientRuby::POST_URL)
+      req_post_url = ThreadsClientRuby::POST_URL
+      data = default_req_params(options)
+      if options[:image]
+        req_post_url = ThreadsClientRuby::POST_WITH_IMAGE_URL
+        data = req_params_with_image(data, options[:image])
+      else
+        data[:publish_mode] = 'text_post'
+      end
+      url = URI.parse(req_post_url)
       headers = get_app_headers
       payload = "signed_body=SIGNATURE.#{URI.encode_www_form_component(JSON.generate(data))}"
       response = HTTParty.post(url, headers: headers, body: payload)
@@ -82,6 +81,29 @@ module ThreadsClientRuby
     end
 
     private
+
+    def default_req_params(options)
+      now = Time.now
+      timezone_offset = -now.utc_offset
+      {
+        text_post_app_info: { reply_control: 0 },
+        timezone_offset: timezone_offset.to_s,
+        source_type: '4',
+        _uid: user_id,
+        device_id: DEFAULT_DEVICE_ID,
+        caption: options[:text] || '',
+        upload_id: now.to_i,
+        device: androidDevice
+      }
+    end
+
+    def req_params_with_image(data, image)
+      upload_id = Time.now.to_i.to_s
+      upload_image(image, upload_id)
+      data[:upload_id] = upload_id
+      data[:scene_capture_type] = ''
+      data
+    end
 
     def androidDevice
       {
@@ -189,5 +211,76 @@ module ThreadsClientRuby
       response_body = JSON.parse(response.body)
       { status: true, response_body: response_body }
     end
+
+    def upload_image(image, upload_id)
+      name = "#{upload_id}_0_#{SecureRandom.random_number(10**10 - 10**9 + 1) + 10**9}"
+      url = "https://www.instagram.com/rupload_igphoto/#{name}"
+    
+      content = nil
+      mime_type = nil
+    
+      if image.is_a?(String) || image.key?(:path)
+        image_path = image.is_a?(String) ? image : image[:path]
+        is_file_path = !image_path.start_with?('http')
+    
+        if is_file_path
+          content = File.binread(image_path)
+          mime_type = MIME::Types.type_for(image_path).first.to_s
+        else
+          image_uri = URI.parse(image_path)
+          response = Net::HTTP.get_response(image_uri)
+          if response.is_a?(Net::HTTPSuccess)
+            content = response.body
+            mime_type = response['content-type']
+          end 
+        end
+      else
+        content = image[:data]
+        mime_type = image[:type].include?('/') ? image[:type] : MIME::Types.type_for(image[:type]).first.to_s
+      end
+    
+      x_instagram_rupload_params = {
+        upload_id: upload_id,
+        media_type: '1',
+        sticker_burnin_params: JSON.generate([]),
+        image_compression: JSON.generate({ lib_name: 'moz', lib_version: '3.1.m', quality: '80' }),
+        xsharing_user_ids: JSON.generate([]),
+        retry_context: JSON.generate({
+          num_step_auto_retry: '0',
+          num_reupload: '0',
+          num_step_manual_retry: '0',
+        }),
+        'IG-FB-Xpost-entry-point-v2': 'feed',
+      }
+    
+      content_length = content.length
+      image_headers = get_default_headers(@username).merge({
+        'Content-Type': 'application/octet-stream',
+        'X_FB_PHOTO_WATERFALL_ID': SecureRandom.uuid,
+        'X-Entity-Type': mime_type ? "image/#{mime_type}" : 'image/jpeg',
+        'Offset': '0',
+        'X-Instagram-Rupload-Params': JSON.generate(x_instagram_rupload_params),
+        'X-Entity-Name': name,
+        'X-Entity-Length': content_length.to_s,
+        'Content-Length': content_length.to_s,
+        'Accept-Encoding': 'gzip',
+      })
+    
+      begin
+        response = Net::HTTP.start(URI(url).hostname, URI(url).port, use_ssl: true) do |http|
+          request = Net::HTTP::Post.new(URI(url).request_uri, image_headers)
+          request.body = content
+          http.request(request)
+        end
+    
+        data = JSON.parse(response.body)
+        data
+      rescue StandardError => e
+        puts "[UPLOAD_IMAGE] FAILED: #{e.response.body}"
+        raise e
+      end
+    end
   end
 end
+
+ # ThreadsClientRuby.publish(text: 'Hello World!', image: '/Users/quan/Products/threads-api/logo.jpg')
