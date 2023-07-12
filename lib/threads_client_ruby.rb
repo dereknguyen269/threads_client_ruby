@@ -1,14 +1,52 @@
+# frozen_string_literal: true
+
+require_relative "threads_client_ruby/version"
 require 'net/http'
 require 'uri'
 require 'json'
 
-module ThreadsClient
+module ThreadsClientRuby
   DEFAULT_DEVICE_ID = "android-#{rand(36**24).to_s(36)}"
   LATEST_ANDROID_APP_VERSION = '289.0.0.77.109'
   BASE_API_URL = 'https://i.instagram.com/api/v1'
   LOGIN_URL = BASE_API_URL + '/bloks/apps/com.bloks.www.bloks.caa.login.async.send_login_request/'
   POST_URL = BASE_API_URL + '/media/configure_text_only_post/'
   DEFAULT_LSD_TOKEN = 'NjppQDEgONsU_1LCzrmp6q'
+  class Error < StandardError; end
+  module Config
+    class << self
+      attr_accessor :credentials # It's hash, with keys: username, password, usertoken, userid
+      def setup
+        @credentials = credentials
+      end
+    end
+    self.setup
+  end
+
+  def self.config(&block)
+    if block_given?
+      block.call(ThreadsClientRuby::Config)
+    else
+      ThreadsClientRuby::Config
+    end
+  end
+
+  def self.get_userinfo
+    core = ThreadsClientRuby::Core.new ThreadsClientRuby::Config.credentials
+    core.user_info
+  end
+
+  def self.publish(options = {})
+    core = ThreadsClientRuby::Core.new ThreadsClientRuby::Config.credentials
+    if options[:text] && options[:image]
+    elsif options[:text]
+      core.publish(options)
+    elsif options[:image]
+    else
+      raise Error.new "Don't have text or image"
+    end
+  end
+
   class Core
     def initialize(credentials)
       @username = credentials[:username]
@@ -32,7 +70,7 @@ module ThreadsClient
         device: androidDevice
       }
       data[:publish_mode] = 'text_post'
-      url = URI.parse(ThreadsClient::POST_URL)
+      url = URI.parse(ThreadsClientRuby::POST_URL)
       headers = get_app_headers
       payload = "signed_body=SIGNATURE.#{URI.encode_www_form_component(JSON.generate(data))}"
       response = HTTParty.post(url, headers: headers, body: payload)
@@ -63,7 +101,7 @@ module ThreadsClient
     end
 
     def get_app_headers
-      app_version = ThreadsClient::LATEST_ANDROID_APP_VERSION
+      app_version = ThreadsClientRuby::LATEST_ANDROID_APP_VERSION
       headers = {
         'User-Agent' => "Barcelona #{app_version} Android",
         'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -83,7 +121,7 @@ module ThreadsClient
         'pragma' => 'no-cache',
         'Sec-Fetch-Site' => 'same-origin',
         'x-asbd-id' => '129477',
-        'x-fb-lsd' => @lsd_token || ThreadsClient::DEFAULT_LSD_TOKEN,
+        'x-fb-lsd' => @lsd_token || ThreadsClientRuby::DEFAULT_LSD_TOKEN,
         'x-ig-app-id' => '238260118697367'
       }
       headers['referer'] = "https://www.threads.net/@#{username}" if username
@@ -94,11 +132,11 @@ module ThreadsClient
       client_input_params = {
         password: @password,
         contact_point: @username,
-        device_id: ThreadsClient::DEFAULT_DEVICE_ID
+        device_id: ThreadsClientRuby::DEFAULT_DEVICE_ID
       }
       server_params = {
         credential_type: 'password',
-        device_id: ThreadsClient::DEFAULT_DEVICE_ID
+        device_id: ThreadsClientRuby::DEFAULT_DEVICE_ID
       }
       params = URI.encode_www_form_component(JSON.generate({
         client_input_params: client_input_params,
@@ -109,7 +147,7 @@ module ThreadsClient
         bloks_version: blockVersion,
         styles_id: 'instagram'
       }))
-      url = URI.parse(ThreadsClient::LOGIN_URL)
+      url = URI.parse(ThreadsClientRuby::LOGIN_URL)
       headers = get_app_headers
       response = HTTParty.post(url, headers: headers, body: "params=#{params}&bk_client_context=#{bkClientContext}&bloks_versioning_id=#{blockVersion}")
       data = response.body
