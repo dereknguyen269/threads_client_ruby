@@ -3,10 +3,10 @@ Gem::Specification.new do |s|
   s.name        = "threads_client"
   s.version     = ThreadsClient::VERSION
   s.summary     = "Threads client for ruby"
-  s.description = "Threads client for ruby"
+  s.description = "Unofficial, Reverse-Engineered Ruby client for Meta's Threads. Supports Read and Write."
   s.authors     = ["Derek Nguyen"]
   s.email       = "derek.nguyen.269@gmail.com"
-  s.homepage    = "https://rubygems.org/gems/threads_client"
+  s.homepage    = "https://github.com/dereknguyen269/threads_client"
   s.license     = "MIT"
 
   s.bindir        = "exe"
