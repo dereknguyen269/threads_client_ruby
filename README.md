@@ -1,4 +1,4 @@
-# [<img src="logo.jpg" width="36" height="36" />](https://github.com/junhoyeo) Threads Client Ruby
+# [<img src="logo.jpg" width="36" height="36" />](https://github.com/dereknguyen269) Threads Client Ruby
 
 > Unofficial, Reverse-Engineered Ruby client for Meta's [Threads](https://threads.net).
 
@@ -63,7 +63,7 @@ end
 
 - [x] ✅ [Text Threads](#✨-threads-with-image)
 - [x] ✅ [Threads with Image](#✨-threads-with-image)
-- [ ] ✅ [Threads with Link Attachment](#✨-threads-with-link-attachment)
+- [x] ✅ [Threads with Link Attachment](#✨-threads-with-link-attachment)
 - [ ] ✅ [Reply to Other Threads](#✨-reply-to-other-threads)
 - [ ] ✅ [Like/Unlike a Thread](#✨-likeunlike-a-thread)
 - [ ] ✅ [Follow/Unfollow a User](#✨-followunfollow-a-user)
@@ -86,6 +86,10 @@ ThreadsClientRuby.publish(text: 'Hello World!', image: '/Users/local-path/logo.j
 ```
 
 ###### ✨ Threads with Link Attachment
+
+```ruby
+ThreadsClientRuby.publish(url: 'https://github.com/dereknguyen269/threads_client_ruby')
+```
 
 ###### ✨ Reply to Other Threads
 

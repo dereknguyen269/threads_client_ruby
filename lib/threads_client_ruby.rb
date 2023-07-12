@@ -43,6 +43,8 @@ module ThreadsClientRuby
   # available key for options:
   # - text
   # - image
+  # - url
+  # - reply_id
   def self.publish(options = {})
     core = ThreadsClientRuby::Core.new ThreadsClientRuby::Config.credentials
     core.publish(options)
@@ -68,6 +70,11 @@ module ThreadsClientRuby
         data = req_params_with_image(data, options[:image])
       else
         data[:publish_mode] = 'text_post'
+      end
+      if options[:url] || options[:reply_id]
+        data[:text_post_app_info] = {}
+        data[:text_post_app_info][:link_attachment_url] = options[:url] if options[:url]
+        data[:text_post_app_info][:reply_id] = options[:reply_id] if options[:reply_id]
       end
       url = URI.parse(req_post_url)
       headers = get_app_headers
