@@ -2,6 +2,10 @@
 
 > Unofficial, Reverse-Engineered Ruby client for Meta's [Threads](https://threads.net).
 
+<p align="center">
+  <img src="cover.png" alt="cover" width="500px" />
+</p>
+
 # Getting Started
 
 ## Installation
